@@ -1,42 +1,13 @@
 basePath: /v1
 definitions:
-  entity.Translation:
+  entity.User:
     properties:
-      destination:
-        example: en
+      id:
+        type: integer
+      telegram_username:
         type: string
-      original:
-        example: текст для перевода
+      username:
         type: string
-      source:
-        example: auto
-        type: string
-      translation:
-        example: text for translation
-        type: string
-    type: object
-  v1.doTranslateRequest:
-    properties:
-      destination:
-        example: en
-        type: string
-      original:
-        example: текст для перевода
-        type: string
-      source:
-        example: auto
-        type: string
-    required:
-      - destination
-      - original
-      - source
-    type: object
-  v1.historyResponse:
-    properties:
-      history:
-        items:
-          $ref: '#/definitions/entity.Translation'
-        type: array
     type: object
   v1.response:
     properties:
@@ -44,62 +15,131 @@ definitions:
         example: message
         type: string
     type: object
+  v1.userCreateForm:
+    properties:
+      telegram_username:
+        type: string
+      username:
+        type: string
+    required:
+    - telegram_username
+    - username
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: Using a translation service as an example
+  description: Using a user service
   title: Go Clean Template API
   version: "1.0"
 paths:
-  /translation/do-translate:
-    post:
-      consumes:
-        - application/json
-      description: Translate a text
-      operationId: do-translate
-      parameters:
-        - description: Set up translation
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: '#/definitions/v1.doTranslateRequest'
-      produces:
-        - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/entity.Translation'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/v1.response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/v1.response'
-      summary: Translate
-      tags:
-        - translation
-  /translation/history:
+  /user:
     get:
       consumes:
-        - application/json
-      description: Show all translation history
-      operationId: history
+      - application/json
+      description: Get all users
+      operationId: user
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/v1.historyResponse'
+            items:
+              $ref: '#/definitions/entity.User'
+            type: array
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/v1.response'
-      summary: Show history
+      summary: Users
       tags:
-        - translation
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Create new user
+      operationId: user_create
+      parameters:
+      - description: User Create Form
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userCreateForm'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: New User
+      tags:
+      - user
+  /user/:username:
+    get:
+      consumes:
+      - application/json
+      description: Get user by username
+      operationId: user_by_username
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entity.User'
+            type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: User
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Update user
+      operationId: user_update
+      parameters:
+      - in: query
+        name: telegramUsername
+        type: string
+      - in: query
+        name: username
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/v1.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/v1.response'
+      summary: Update User
+      tags:
+      - user
 swagger: "2.0"

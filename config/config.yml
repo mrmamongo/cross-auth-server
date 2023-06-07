@@ -1,5 +1,5 @@
 app:
-  name: 'go-clean-template'
+  name: 'go-tg-auth'
   version: '1.0.0'
 
 http:
@@ -7,11 +7,11 @@ http:
 
 logger:
   log_level: 'debug'
-  rollbar_env: 'go-clean-template'
+  rollbar_env: 'go-tg-auth'
 
 postgres:
-  pool_max: 2
+  pool_max: 10
+  url: "postgres://user:pass@localhost:5432/postgres"
 
-rabbitmq:
-  rpc_server_exchange: 'rpc_server'
-  rpc_client_exchange: 'rpc_client'
+telegram:
+  token: "5895361951:AAEytOyi3g_sNEigRmFHQNfUI2bXdMWXT1U"

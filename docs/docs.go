@@ -23,9 +23,9 @@ var doc = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/translation/do-translate": {
-            "post": {
-                "description": "Translate a text",
+        "/user": {
+            "get": {
+                "description": "Get all users",
                 "consumes": [
                     "application/json"
                 ],
@@ -33,18 +33,49 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "translation"
+                    "user"
                 ],
-                "summary": "Translate",
-                "operationId": "do-translate",
+                "summary": "Users",
+                "operationId": "user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entity.User"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/v1.response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create new user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "New User",
+                "operationId": "user_create",
                 "parameters": [
                     {
-                        "description": "Set up translation",
+                        "description": "User Create Form",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.doTranslateRequest"
+                            "$ref": "#/definitions/v1.userCreateForm"
                         }
                     }
                 ],
@@ -52,11 +83,11 @@ var doc = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/entity.Translation"
+                            "$ref": "#/definitions/entity.User"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/v1.response"
                         }
@@ -70,9 +101,9 @@ var doc = `{
                 }
             }
         },
-        "/translation/history": {
+        "/user/:username": {
             "get": {
-                "description": "Show all translation history",
+                "description": "Get user by username",
                 "consumes": [
                     "application/json"
                 ],
@@ -80,15 +111,73 @@ var doc = `{
                     "application/json"
                 ],
                 "tags": [
-                    "translation"
+                    "user"
                 ],
-                "summary": "Show history",
-                "operationId": "history",
+                "summary": "User",
+                "operationId": "user_by_username",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/v1.historyResponse"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/entity.User"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/v1.response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Update user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Update User",
+                "operationId": "user_update",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "telegramUsername",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "username",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entity.User"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/v1.response"
                         }
                     },
                     "500": {
@@ -102,57 +191,17 @@ var doc = `{
         }
     },
     "definitions": {
-        "entity.Translation": {
+        "entity.User": {
             "type": "object",
             "properties": {
-                "destination": {
-                    "type": "string",
-                    "example": "en"
+                "id": {
+                    "type": "integer"
                 },
-                "original": {
-                    "type": "string",
-                    "example": "текст для перевода"
+                "telegram_username": {
+                    "type": "string"
                 },
-                "source": {
-                    "type": "string",
-                    "example": "auto"
-                },
-                "translation": {
-                    "type": "string",
-                    "example": "text for translation"
-                }
-            }
-        },
-        "v1.doTranslateRequest": {
-            "type": "object",
-            "required": [
-                "destination",
-                "original",
-                "source"
-            ],
-            "properties": {
-                "destination": {
-                    "type": "string",
-                    "example": "en"
-                },
-                "original": {
-                    "type": "string",
-                    "example": "текст для перевода"
-                },
-                "source": {
-                    "type": "string",
-                    "example": "auto"
-                }
-            }
-        },
-        "v1.historyResponse": {
-            "type": "object",
-            "properties": {
-                "history": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.Translation"
-                    }
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -162,6 +211,21 @@ var doc = `{
                 "error": {
                     "type": "string",
                     "example": "message"
+                }
+            }
+        },
+        "v1.userCreateForm": {
+            "type": "object",
+            "required": [
+                "telegram_username",
+                "username"
+            ],
+            "properties": {
+                "telegram_username": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         }
@@ -184,7 +248,7 @@ var SwaggerInfo = swaggerInfo{
 	BasePath:    "/v1",
 	Schemes:     []string{},
 	Title:       "Go Clean Template API",
-	Description: "Using a translation service as an example",
+	Description: "Using a user service",
 }
 
 type s struct{}
@@ -219,5 +283,5 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register(swag.Name, &s{})
+	swag.Register("swagger", &s{})
 }

@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/mrmamongo/go-auth-tg/config"
+	"github.com/mrmamongo/go-auth-tg/internal/app"
 	"log"
-
-	"github.com/evrone/go-clean-template/config"
-	"github.com/evrone/go-clean-template/internal/app"
 )
 
 func main() {

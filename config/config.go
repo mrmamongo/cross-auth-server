@@ -9,11 +9,11 @@ import (
 type (
 	// Config -.
 	Config struct {
-		App  `yaml:"app"`
-		HTTP `yaml:"http"`
-		Log  `yaml:"logger"`
-		PG   `yaml:"postgres"`
-		RMQ  `yaml:"rabbitmq"`
+		App      `yaml:"app"`
+		HTTP     `yaml:"http"`
+		Log      `yaml:"logger"`
+		PG       `yaml:"postgres"`
+		Telegram `yaml:"telegram"`
 	}
 
 	// App -.
@@ -38,11 +38,8 @@ type (
 		URL     string `env-required:"true"                 env:"PG_URL"`
 	}
 
-	// RMQ -.
-	RMQ struct {
-		ServerExchange string `env-required:"true" yaml:"rpc_server_exchange" env:"RMQ_RPC_SERVER"`
-		ClientExchange string `env-required:"true" yaml:"rpc_client_exchange" env:"RMQ_RPC_CLIENT"`
-		URL            string `env-required:"true"                            env:"RMQ_URL"`
+	Telegram struct {
+		Token string `env-required:"true" yaml:"token" env:"TELEGRAM_TOKEN"`
 	}
 )
 

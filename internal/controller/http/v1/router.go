@@ -10,19 +10,19 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	// Swagger docs.
-	_ "github.com/evrone/go-clean-template/docs"
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/pkg/logger"
+	_ "github.com/mrmamongo/go-auth-tg/docs"
+	"github.com/mrmamongo/go-auth-tg/internal/usecase"
+	"github.com/mrmamongo/go-auth-tg/pkg/logger"
 )
 
 // NewRouter -.
 // Swagger spec:
 // @title       Go Clean Template API
-// @description Using a translation service as an example
+// @description Using a user service
 // @version     1.0
 // @host        localhost:8080
 // @BasePath    /v1
-func NewRouter(handler *gin.Engine, l logger.Interface, t usecase.Translation) {
+func NewRouter(handler *gin.Engine, l logger.Interface, t usecase.User) {
 	// Options
 	handler.Use(gin.Logger())
 	handler.Use(gin.Recovery())
@@ -40,6 +40,6 @@ func NewRouter(handler *gin.Engine, l logger.Interface, t usecase.Translation) {
 	// Routers
 	h := handler.Group("/v1")
 	{
-		newTranslationRoutes(h, t, l)
+		newUserRoutes(h, t, l)
 	}
 }

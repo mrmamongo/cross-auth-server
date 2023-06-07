@@ -4,26 +4,17 @@ package usecase
 import (
 	"context"
 
-	"github.com/evrone/go-clean-template/internal/entity"
+	"github.com/mrmamongo/go-auth-tg/internal/entity"
 )
 
 //go:generate mockgen -source=interfaces.go -destination=./mocks_test.go -package=usecase_test
 
 type (
-	// Translation -.
-	Translation interface {
-		Translate(context.Context, entity.Translation) (entity.Translation, error)
-		History(context.Context) ([]entity.Translation, error)
-	}
-
-	// TranslationRepo -.
-	TranslationRepo interface {
-		Store(context.Context, entity.Translation) error
-		GetHistory(context.Context) ([]entity.Translation, error)
-	}
-
-	// TranslationWebAPI -.
-	TranslationWebAPI interface {
-		Translate(entity.Translation) (entity.Translation, error)
+	// User -.
+	User interface {
+		GetAll(context.Context) ([]entity.User, error)
+		GetByUsername(context.Context, string) (*entity.User, error)
+		Create(context.Context, *entity.User) error
+		Update(context.Context, *entity.User) error
 	}
 )

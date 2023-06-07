@@ -3,22 +3,22 @@ package app
 
 import (
 	"fmt"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/mrmamongo/go-auth-tg/internal/controller/telegram/command"
+	"github.com/mrmamongo/go-auth-tg/pkg/tgbot"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/evrone/go-clean-template/config"
-	amqprpc "github.com/evrone/go-clean-template/internal/controller/amqp_rpc"
-	v1 "github.com/evrone/go-clean-template/internal/controller/http/v1"
-	"github.com/evrone/go-clean-template/internal/usecase"
-	"github.com/evrone/go-clean-template/internal/usecase/repo"
-	"github.com/evrone/go-clean-template/internal/usecase/webapi"
-	"github.com/evrone/go-clean-template/pkg/httpserver"
-	"github.com/evrone/go-clean-template/pkg/logger"
-	"github.com/evrone/go-clean-template/pkg/postgres"
-	"github.com/evrone/go-clean-template/pkg/rabbitmq/rmq_rpc/server"
+	"github.com/mrmamongo/go-auth-tg/config"
+	v1 "github.com/mrmamongo/go-auth-tg/internal/controller/http/v1"
+	"github.com/mrmamongo/go-auth-tg/internal/usecase"
+	"github.com/mrmamongo/go-auth-tg/internal/usecase/repo"
+	"github.com/mrmamongo/go-auth-tg/pkg/httpserver"
+	"github.com/mrmamongo/go-auth-tg/pkg/logger"
+	"github.com/mrmamongo/go-auth-tg/pkg/postgres"
 )
 
 // Run creates objects via constructors.
@@ -33,23 +33,23 @@ func Run(cfg *config.Config) {
 	defer pg.Close()
 
 	// Use case
-	translationUseCase := usecase.New(
-		repo.New(pg),
-		webapi.New(),
+	userUseCase := usecase.NewUserUseCase(
+		repo.NewUserRepo(pg),
 	)
-
-	// RabbitMQ RPC Server
-	rmqRouter := amqprpc.NewRouter(translationUseCase)
-
-	rmqServer, err := server.New(cfg.RMQ.URL, cfg.RMQ.ServerExchange, rmqRouter, l)
-	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - rmqServer - server.New: %w", err))
-	}
-
 	// HTTP Server
 	handler := gin.New()
-	v1.NewRouter(handler, l, translationUseCase)
+	v1.NewRouter(handler, l, userUseCase)
 	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
+
+	// Telegram Bot
+	b, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
+	if err != nil {
+		l.Fatal(fmt.Errorf("app - Run - tgbotapi.NewBotAPI: %w", err))
+	}
+	dispatcher := tgbot.NewTelegramBotDispatcher(b, l)
+	command.NewUserCommands(dispatcher, l, userUseCase)
+
+	bot := tgbot.NewTelegramBot(b, dispatcher)
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -60,8 +60,8 @@ func Run(cfg *config.Config) {
 		l.Info("app - Run - signal: " + s.String())
 	case err = <-httpServer.Notify():
 		l.Error(fmt.Errorf("app - Run - httpServer.Notify: %w", err))
-	case err = <-rmqServer.Notify():
-		l.Error(fmt.Errorf("app - Run - rmqServer.Notify: %w", err))
+	case err = <-bot.Notify():
+		l.Error(fmt.Errorf("app - Run - bot.Notify: %w", err))
 	}
 
 	// Shutdown
@@ -70,7 +70,8 @@ func Run(cfg *config.Config) {
 		l.Error(fmt.Errorf("app - Run - httpServer.Shutdown: %w", err))
 	}
 
-	err = rmqServer.Shutdown()
+	bot.Shutdown()
+
 	if err != nil {
 		l.Error(fmt.Errorf("app - Run - rmqServer.Shutdown: %w", err))
 	}
