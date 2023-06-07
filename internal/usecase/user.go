@@ -31,3 +31,7 @@ func (uc *UserUseCase) GetAll(ctx context.Context) ([]entity.User, error) {
 func (uc *UserUseCase) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	return uc.repo.GetByUsername(ctx, username)
 }
+
+func (uc *UserUseCase) GetByTelegram(ctx context.Context, telegramUsername string) (*entity.User, error) {
+	return uc.repo.GetByTelegram(ctx, telegramUsername)
+}

@@ -49,8 +49,24 @@ func (r *UserRepo) GetByUsername(ctx context.Context, username string) (*entity.
 	return user, nil
 }
 
+func (r *UserRepo) GetByTelegram(ctx context.Context, telegramUsername string) (*entity.User, error) {
+	user := new(entity.User)
+	sql, args, err := r.Builder.Select("id", "username", "telegram_username").From("users").Where(squirrel.Eq{"telegram_username": telegramUsername}).Limit(1).ToSql()
+
+	if err != nil {
+		return nil, fmt.Errorf("UserRepo - GetUserByUsername - r.Builder.Insert: %w", err)
+	}
+
+	err = r.Pool.QueryRow(ctx, sql, args...).Scan(&user.Id, &user.Username, &user.TelegramUsername)
+	if err != nil {
+		return nil, fmt.Errorf("UserRepo - GetUserByUsername - r.Pool.QueryRow: %w", err)
+	}
+
+	return user, nil
+}
+
 func (r *UserRepo) Create(ctx context.Context, user *entity.User) error {
-	sql, args, err := r.Builder.Insert("user").Columns("username", "telegram_username").Values(user.Username, user.TelegramUsername).Suffix("RETURNING id").ToSql()
+	sql, args, err := r.Builder.Insert("users").Columns("username", "telegram_username").Values(user.Username, user.TelegramUsername).Suffix("RETURNING id").ToSql()
 
 	if err != nil {
 		return fmt.Errorf("UserRepo - Create - r.Builder.Insert: %w", err)
@@ -65,7 +81,7 @@ func (r *UserRepo) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (r *UserRepo) Update(ctx context.Context, user *entity.User) error {
-	sql, args, err := r.Builder.Update("user").Set("username", user.Username).Set("telegram_username", user.TelegramUsername).Where(squirrel.Eq{"id": user.Id}).Suffix("RETURNING id").ToSql()
+	sql, args, err := r.Builder.Update("users").Set("username", user.Username).Set("telegram_username", user.TelegramUsername).Where(squirrel.Eq{"id": user.Id}).Suffix("RETURNING id").ToSql()
 
 	if err != nil {
 		return fmt.Errorf("UserRepo - UpdateTg - r.Builder.Update: %w", err)

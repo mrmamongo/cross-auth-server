@@ -31,7 +31,10 @@ func (t *TelegramBot) start() {
 
 			err := t.dispatcher.Update(update)
 			if err != nil {
-				t.notify <- fmt.Errorf("tgbot - TelegramBot - Dispatch: %e", err)
+				_, err = t.bot.Send(tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("tgbot - TelegramBot - Dispatch: %e", err)))
+				if err != nil {
+					return
+				}
 			}
 		}
 	}()

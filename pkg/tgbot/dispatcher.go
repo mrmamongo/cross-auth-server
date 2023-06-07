@@ -39,7 +39,11 @@ func (c *TelegramBotDispatcher) Update(update tgbotapi.Update) error {
 		if !ok {
 			return fmt.Errorf("unknown command: %s", command)
 		}
-		return handler(c.bot, update.Message)
+		err := handler(c.bot, update.Message)
+		if err != nil {
+			c.l.Error(err)
+		}
+		return err
 	}
 	return c.messageHandler(c.bot, update.Message)
 }

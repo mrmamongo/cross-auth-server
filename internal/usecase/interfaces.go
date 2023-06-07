@@ -14,6 +14,7 @@ type (
 	User interface {
 		GetAll(context.Context) ([]entity.User, error)
 		GetByUsername(context.Context, string) (*entity.User, error)
+		GetByTelegram(context.Context, string) (*entity.User, error)
 		Create(context.Context, *entity.User) error
 		Update(context.Context, *entity.User) error
 	}

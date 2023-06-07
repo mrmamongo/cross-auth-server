@@ -14,4 +14,4 @@ postgres:
   url: "postgres://user:pass@localhost:5432/postgres"
 
 telegram:
-  token: "5895361951:AAEytOyi3g_sNEigRmFHQNfUI2bXdMWXT1U"
+  token: "SECRET"
