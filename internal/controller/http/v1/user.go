@@ -85,7 +85,7 @@ type userCreateForm struct {
 // @Router      /user [post]
 func (r *userRoutes) create(c *gin.Context) {
 	var user userCreateForm
-	if err := c.ShouldBindJSON(user); err != nil {
+	if err := c.ShouldBindJSON(&user); err != nil {
 		r.l.Error(err, "http - v1 - create")
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

@@ -2,10 +2,12 @@
 package app
 
 import (
+	"context"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	botapi "github.com/go-telegram/bot"
 	"github.com/mrmamongo/go-auth-tg/internal/controller/telegram/command"
 	"github.com/mrmamongo/go-auth-tg/pkg/tgbot"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -36,20 +38,33 @@ func Run(cfg *config.Config) {
 	userUseCase := usecase.NewUserUseCase(
 		repo.NewUserRepo(pg),
 	)
-	// HTTP Server
-	handler := gin.New()
-	v1.NewRouter(handler, l, userUseCase)
-	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Telegram Bot
-	b, err := tgbotapi.NewBotAPI(cfg.Telegram.Token)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer cancel()
+	b, err := botapi.New(cfg.Token)
+	_, err = b.DeleteWebhook(ctx, &botapi.DeleteWebhookParams{DropPendingUpdates: true})
+
+	_, err = b.SetWebhook(ctx, &botapi.SetWebhookParams{
+		URL: "https://45c8-2a00-1370-81a8-8fe-e5d0-297b-f366-4365.ngrok-free.app/api/v1/bot5895361951:AAEytOyi3g_sNEigRmFHQNfUI2bXdMWXT1U",
+	})
 	if err != nil {
-		l.Fatal(fmt.Errorf("app - Run - tgbotapi.NewBotAPI: %w", err))
+		return
 	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	dispatcher := tgbot.NewTelegramBotDispatcher(b, l)
 	command.NewUserCommands(dispatcher, l, userUseCase)
 
-	bot := tgbot.NewTelegramBot(b, dispatcher)
+	bot := tgbot.NewTelegramBot(ctx, b, dispatcher)
+
+	// HTTP Server
+	handler := gin.New()
+	v1.NewRouter(handler, l, userUseCase)
+	bot.RegisterRouter(handler, cfg)
+	httpServer := httpserver.New(handler, httpserver.Port(cfg.HTTP.Port))
 
 	// Waiting signal
 	interrupt := make(chan os.Signal, 1)
@@ -71,8 +86,7 @@ func Run(cfg *config.Config) {
 	}
 
 	bot.Shutdown()
-
 	if err != nil {
-		l.Error(fmt.Errorf("app - Run - rmqServer.Shutdown: %w", err))
+		l.Error(fmt.Errorf("app - Run - bot.Shutdown: %w", err))
 	}
 }

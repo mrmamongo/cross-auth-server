@@ -1,51 +1,51 @@
 package tgbot
 
 import (
+	"context"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	botapi "github.com/go-telegram/bot"
+	models "github.com/go-telegram/bot/models"
 	"github.com/mrmamongo/go-auth-tg/pkg/logger"
+	"strings"
 )
 
-type CommandHandler func(*tgbotapi.BotAPI, *tgbotapi.Message) error
+type CommandHandler func(ctx context.Context, bot *botapi.Bot, update *models.Message)
 
-type MessageHandler func(*tgbotapi.BotAPI, *tgbotapi.Message) error
+type MessageHandler func(ctx context.Context, bot *botapi.Bot, update *models.Message)
 
 type TelegramBotDispatcher struct {
-	bot             *tgbotapi.BotAPI
 	l               logger.Interface
 	commandHandlers map[string]CommandHandler
 	messageHandler  MessageHandler
 }
 
-func NewTelegramBotDispatcher(bot *tgbotapi.BotAPI, l logger.Interface) *TelegramBotDispatcher {
-	return &TelegramBotDispatcher{
-		bot:             bot,
+func NewTelegramBotDispatcher(bot *botapi.Bot, l logger.Interface) *TelegramBotDispatcher {
+	dispatcher := TelegramBotDispatcher{
 		l:               l,
 		commandHandlers: make(map[string]CommandHandler),
-		messageHandler: func(bot *tgbotapi.BotAPI, m *tgbotapi.Message) error {
-			return nil
+		messageHandler: func(ctx context.Context, bot *botapi.Bot, update *models.Message) {
+			return
 		},
 	}
+	bot.RegisterHandler(botapi.HandlerTypeMessageText, "", botapi.MatchTypeContains, dispatcher.Update)
+	return &dispatcher
 }
 
-func (c *TelegramBotDispatcher) Update(update tgbotapi.Update) error {
-	if update.Message == nil {
-		return nil
+func (c *TelegramBotDispatcher) Update(ctx context.Context, bot *botapi.Bot, update *models.Update) {
+	if update.Message.Text == "" {
+		return
 	}
 
-	if update.Message.IsCommand() {
-		command := update.Message.Command()
-		handler, ok := c.commandHandlers[command]
-		if !ok {
-			return fmt.Errorf("unknown command: %s", command)
-		}
-		err := handler(c.bot, update.Message)
-		if err != nil {
-			c.l.Error(err)
-		}
-		return err
+	if update.Message.Text[0] != '/' {
+		c.messageHandler(ctx, bot, update.Message)
 	}
-	return c.messageHandler(c.bot, update.Message)
+	command := strings.Split(update.Message.Text, " ")[0]
+	handler, ok := c.commandHandlers[command]
+	if !ok {
+		c.l.Error(fmt.Errorf("unknown command: %s", command))
+		return
+	}
+	handler(ctx, bot, update.Message)
 }
 
 func (c *TelegramBotDispatcher) RegisterCommandHandler(command string, handler CommandHandler) {
